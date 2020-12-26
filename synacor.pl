@@ -10,7 +10,7 @@ use Clone qw/clone/;
 
 my @mem;
 my @stack;
-my %regs;
+my %regs = map { $_ => 0 } (0..7);
 my $ip = 0;
 
 my %ops = qw/
@@ -40,6 +40,14 @@ call 1 ret 0
 out 1 in 1
 noop 0
 /;
+
+my $dbgf;
+sub dbg
+{
+    open($dbgf, ">debug.txt") unless defined $dbgf;
+    my $a = shift;
+    print $dbgf "$a\n";
+}
 
 open my $fh, '<:raw', 'challenge.bin';
 while (1)
@@ -100,9 +108,18 @@ while (1)
     my @b = ();
     for my $e (@a)
     {
-        push(@b, ($e >= 32768 && $e <= 32775) ? "R".($e - 32768) : $e);
+        if ($e >= 32768 && $e <= 32775)
+        {
+            my $r = $e - 32768;
+            my $v = $regs{$r};
+            push(@b, "R$r"."=$v");
+        }
+        else
+        {
+            push(@b,  $e);
+        }
     }
-    printf(STDERR "%4d: %5s %s\n", $ip, $ops{$op}, join(" ", @b));
+    dbg sprintf("%4d: %5s %s", $ip, $ops{$op}, join(" ", @b));
 
     my $skip = $opsargs{$ops{$op}} + 1;
     my ($a,$b,$c);
@@ -123,14 +140,16 @@ while (1)
         $a = vr $mem[$ip+1];
         push(@stack, $a);
         $ip += $skip;
+        dbg "stack: ".join(" ", @stack);
     }
     elsif ($ops{$op} eq 'pop')
     {
         $b = pop(@stack);
-        die "pop from empty stack at $ip" unless defined $a;
+        die "pop from empty stack at $ip" unless defined $b;
         $a = r $mem[$ip+1];
         $regs{$a} = $b;
         $ip += $skip;
+        dbg "stack: ".join(" ", @stack);
     }
     elsif ($ops{$op} eq 'eq')
     {
@@ -207,7 +226,7 @@ while (1)
         $regs{$a} = $b | $c;
         $ip += $skip;
     }
-    elsif ($ops{$op} eq 'or')
+    elsif ($ops{$op} eq 'not')
     {
         $a = r $mem[$ip+1];
         $b = vr $mem[$ip+2];
@@ -248,7 +267,7 @@ while (1)
     }
     elsif ($ops{$op} eq 'in')
     {
-        $b = getc();
+        $b = ord(getc());
         $a = r $mem[$ip+1];
         $regs{$a} = $b;
         $ip += $skip;
