@@ -11,10 +11,17 @@ use Clone qw/clone/;
 use IPC::Open3;
 use POSIX ":sys_wait_h";
 
-my $startupstr = "help
+my $startupstr = "#
+# testing:
+help
+inv
+
+# 3rd code
 north
 take tablet
 use tablet
+
+# 4th code
 doorway
 north
 north
@@ -27,6 +34,65 @@ west
 west
 passage
 ladder
+west
+south
+north
+take can
+use can
+use lantern
+
+# 5th code
+west
+ladder
+darkness
+continue
+west
+west
+west
+west
+north
+take red coin
+# red = 2
+look red coin
+north
+west
+take blue coin
+# blue = 9
+look blue coin
+up
+take shiny coin
+# shiny = 5
+look shiny coin
+down
+east
+east
+take concave coin
+# concave = 7
+look concave coin
+down
+take corroded coin
+# corroded = 3
+look corroded coin
+up
+west
+# _ + _ * _^2 + _^3 - _ = 399
+# 9 2 5 7 3
+use blue coin
+use red coin
+use shiny coin
+use concave coin
+use corroded coin
+north
+take teleporter
+# now we need to hack reg{7} :)
+hack r7 1
+use teleporter
+
+# take business card
+# look business card
+# take strange book
+# look strange book
+
 ";
 
 my @startup = split/\n/, $startupstr;
@@ -69,7 +135,7 @@ sub quithandler
     exit 0;
 };
 
-$SIG{CHLD} = &quithandler;
+$SIG{CHLD} = \&quithandler;
 
 $pid = open3(my $in, my $out, my $err, 'perl synacor.pl');
 
@@ -92,16 +158,23 @@ sub getline
     return $_;
 }
 
-while (1)
+W: while (1)
 {
     $_ = getline();
 
     if (/^$prompt/)
     {
-        last unless @startup;
-        my $cmd = shift(@startup);
-        print("$cmd\n");
-        print($in "$cmd\n");
+        while (1)
+        {
+            last W unless @startup;
+            my $cmd = shift(@startup);
+
+            next if $cmd =~ /^#/;
+            next if $cmd =~ /^\s*$/;
+            print("$cmd\n");
+            print($in "$cmd\n");
+            last;
+        }
     }
 }
 

@@ -8,6 +8,8 @@ use File::Slurp;
 use Algorithm::Combinatorics qw(combinations permutations);
 use Clone qw/clone/;
 
+$| = 1;
+
 my @mem;
 my @stack;
 my %regs = map { $_ => 0 } (0..7);
@@ -15,6 +17,8 @@ my $ip = 0;
 
 my $outbuf;
 my @inbuf;
+
+my $lastcomm = '';
 
 my %ops = qw/
 0 halt
@@ -42,24 +46,6 @@ rmem 2 wmem 2
 call 1 ret 0
 out 1 in 1
 noop 0
-/;
-
-my @startup = qw/
-north
-take tablet
-use tablet
-doorway
-north
-north
-bridge
-continue
-down
-east
-take empty lantern
-west
-west
-passage
-ladder
 /;
 
 my $dbgf;
@@ -122,11 +108,6 @@ sub type($)
         push(@inbuf, $a)
     }
     push(@inbuf, "\n");
-}
-
-for my $m (@startup)
-{
-    type($m);
 }
 
 while (1)
@@ -310,14 +291,29 @@ while (1)
     {
         if (@inbuf)
         {
-            my $t = shift(@inbuf);
-            print $t;
-            $b = ord($t);
+            my $b = shift(@inbuf);
+            print $b;
         }
         else
         {
-            $b = ord(getc());
+            $b = getc();
         }
+
+        if ($b eq "\n")
+        {
+            if ($lastcomm =~ /hack r7 (\d+)/)
+            {
+                $regs{7} = $1;
+            }
+
+            $lastcomm = '';
+        }
+        else
+        {
+            $lastcomm .= $b;
+        }
+
+        $b = ord($b);
         $a = r $mem[$ip+1];
         $regs{$a} = $b;
         $ip += $skip;
