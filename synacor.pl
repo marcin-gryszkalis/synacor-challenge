@@ -110,6 +110,55 @@ sub type($)
     push(@inbuf, "\n");
 }
 
+
+# disassembly
+open(my $disf, ">synacore.asm");
+while (1)
+{
+    my $op = $mem[$ip];
+    last unless defined $op;
+
+    if (!exists $ops{$op})
+    {
+        printf($disf "%4d: %5s %s\n", $ip, "data", $op);
+        $ip++;
+        next;
+    }
+
+    my @a = ();
+    for my $i (1..$opsargs{$ops{$op}})
+    {
+        push(@a, $mem[$ip+$i]);
+    }
+
+    my @b = ();
+    for my $e (@a)
+    {
+        if ($e >= 32768 && $e <= 32775)
+        {
+            my $r = $e - 32768;
+            push(@b, "R$r");
+        }
+        else
+        {
+            push(@b,  $e);
+        }
+    }
+
+    my $v = join(" ", @b);
+    if ($ops{$op} eq 'out' && $v !~ /^R/ && $b[0] < 128) # readable out
+    {
+        $v = $b[0] == 0x0a ? "EOL" : "'".chr($b[0])."'";
+    }
+    printf($disf "%4d: %5s %s\n", $ip, $ops{$op}, $v);
+
+    my $skip = $opsargs{$ops{$op}} + 1;
+    $ip += $skip;
+}
+close($disf);
+
+
+$ip = 0;
 while (1)
 {
     my $op = $mem[$ip];
