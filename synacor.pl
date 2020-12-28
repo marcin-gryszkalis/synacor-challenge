@@ -350,9 +350,15 @@ while (1)
 
         if ($b eq "\n")
         {
-            if ($lastcomm =~ /hack r7 (\d+)/)
+            if ($lastcomm =~ /hack r(\d)=(\d+)/)
             {
-                $regs{7} = $1;
+                $regs{$1} = $2;
+                print "HACK R$1 = $2\n";
+            }
+            elsif ($lastcomm =~ /hack m(\d+)=(\d+)/)
+            {
+                $mem[$1] = $2;
+                print "HACK MEM($1) = $2\n";
             }
 
             $lastcomm = '';
