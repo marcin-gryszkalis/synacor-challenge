@@ -12,16 +12,20 @@ use IPC::Open3;
 use POSIX ":sys_wait_h";
 
 my $startupstr = "#
+# 1st code in instructions
+# 2nd after startup
+# 3rd after successful selftest
+
 # testing:
 help
 inv
 
-# 3rd code
+# 4th code
 north
 take tablet
 use tablet
 
-# 4th code
+# 5th code
 doorway
 north
 north
@@ -41,7 +45,7 @@ take can
 use can
 use lantern
 
-# 5th code
+# 6th code
 west
 ladder
 darkness
@@ -86,6 +90,8 @@ north
 take teleporter
 use teleporter
 
+# 7th code
+
 take business card
 look business card
 take strange book
@@ -109,6 +115,44 @@ hack m5490=5579
 hack m5490=5498
 
 use teleporter
+
+# 7th code
+north
+north
+north
+north
+north
+north
+north
+east
+take journal
+look journal
+west
+north
+north
+
+# antechamber
+look orb
+take orb
+
+# solved with orb.pl
+north
+east
+east
+north
+west
+south
+east
+east
+west
+north
+north
+east
+
+# final 8th code
+vault
+take mirror
+use mirror
 ";
 
 my @startup = split/\n/, $startupstr;
@@ -124,26 +168,6 @@ sub quithandler
     return unless defined $pid;
 
     my $kid = waitpid($pid, WNOHANG);
-#    my $child_status = $?;
-
-    # if ($kid > 0) {
-    #     # child exited
-    #     if ($child_status & 127) {
-    #         # child died somehow
-    #         die sprintf("child died with signal %d, %s coredump\n", ($? & 127),  ($? & 128) ? 'with' : 'without');
-    #     } else {
-    #         # child exited calmly
-    #         $child_result = ($child_status >> 8);
-    #         print "(child exited normally with result=$child_result)\n" if $COMMENTARY;
-    #     }
-    # } else {
-    #     # unexpected (e.g. interrupted?)
-    #     print "(other SIGCHILD: pid=$child_pid: child_status=$child_status\n" if $COMMENTARY;
-
-    #     # we might decide this is fatal
-    #     die "interrupted: unable to continue\n" if $DIE_ON_INTERRUPTION;
-    # }
-
     for my $k (sort keys %seen)
     {
         print "$k\n";
