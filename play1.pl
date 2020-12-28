@@ -84,15 +84,31 @@ use concave coin
 use corroded coin
 north
 take teleporter
-# now we need to hack reg{7} :)
-hack r7 1
 use teleporter
 
-# take business card
-# look business card
-# take strange book
-# look strange book
+take business card
+look business card
+take strange book
+look strange book
 
+# now we need to hack reg{7} :)
+# calculated with ack.pl
+hack r7=25734
+
+# eg. noop
+# hack m5489=21
+# hack m5490=21
+
+# jmp override:
+hack m5489=6
+
+# jmp = Miscalibration detected!  Aborting teleportation!
+hack m5490=5579
+
+# jmp = beach
+hack m5490=5498
+
+use teleporter
 ";
 
 my @startup = split/\n/, $startupstr;
