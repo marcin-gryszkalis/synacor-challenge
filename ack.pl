@@ -4,6 +4,9 @@ use warnings;
 no warnings 'recursion';
 use Memoize qw/memoize flush_cache/;
 
+use Parallel::ForkManager;
+my $pm = Parallel::ForkManager->new(8);
+
 $; = ",";
 
 #https://en.wikipedia.org/wiki/Ackermann_function
@@ -35,7 +38,7 @@ $; = ",";
 # 5491:    eq R1 R0 6 <- expecter result
 # 5495:    jf R1 5579
 
-our $r7 = 777;
+our $r7 = 0;
 sub ack
 {
     my ($a, $b) = @_;
@@ -45,12 +48,24 @@ sub ack
     return ack($a-1, ack($a, $b-1));
 }
 
+
 memoize('ack');
-while (1)
+
+
+while ($r7 < 32768)
 {
-    flush_cache('ack');
+    $r7++;
+#    flush_cache('ack');
+
+    $pm->start and next;
+
     my $r = ack(4,1);
     printf("r7=%d ack(4,1)=%d\n", $r7, $r);
-    exit if $r == 6;
-    $r7++;
-}
+    if ($r == 6)
+    {
+        kill(9, getppid());
+    }
+
+    $pm->finish;
+};
+$pm->wait_all_children;
